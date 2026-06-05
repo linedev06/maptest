@@ -10,7 +10,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 
 <style>
   :root{
@@ -28,7 +28,7 @@
 
   body{
     font-family:'EB Garamond', Georgia, serif;
-    background:#9edafc;           /* branco — sem recorte visível */
+    background:#9edafc;
     color:var(--tinta);
     overflow:hidden;
   }
@@ -39,10 +39,9 @@
     cursor:grab;
   }
   #map:active{ cursor:grabbing; }
-
   .leaflet-container{ background:#9edafc; outline:none; }
 
-  /* ---- HAMBURGUER (só aparece no mobile) ---- */
+  /* ---- HAMBURGUER (mobile) ---- */
   #hamburguer{
     display:none;
     position:absolute; top:14px; left:14px; z-index:700;
@@ -81,7 +80,6 @@
     padding-bottom:10px; margin-bottom:10px;
   }
 
-  /* lista de lugares */
   .lugares{ max-height:38vh; overflow:auto; margin:-2px -4px 12px; padding:0 4px; }
   .lugares::-webkit-scrollbar{ width:4px; }
   .lugares::-webkit-scrollbar-thumb{ background:var(--ouro); border-radius:2px; }
@@ -96,7 +94,7 @@
 
   /* botão localizador */
   .coord-btn{
-    display:flex; align-items:center; justify-content:center; gap:8px;
+    display:flex; align-items:center; justify-content:center; gap:7px;
     width:100%; cursor:pointer;
     font-family:'Cinzel',serif; font-size:11px; letter-spacing:.5px;
     text-transform:uppercase;
@@ -106,8 +104,9 @@
   }
   .coord-btn:hover{ background:#3a2c1f; }
   .coord-btn.ativo{ background:var(--vinho); }
+  .coord-btn svg{ width:13px; height:13px; fill:var(--pergaminho); flex:none; }
 
-  /* leitura de coordenadas */
+  /* leitura coordenadas */
   #leitura{
     position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
     z-index:600; display:none;
@@ -120,47 +119,95 @@
   #leitura b{ color:var(--ouro-claro); }
   #leitura small{ display:block; font-family:'EB Garamond',serif; letter-spacing:0; opacity:.7; font-size:12px; margin-top:3px; }
 
-  /* ---- PINOS ---- */
-  .pino{
-    width:14px; height:14px; border-radius:50%;
-    background:var(--ouro);
-    border:2px solid rgba(0,0,0,.5);
-    box-shadow:0 2px 6px rgba(0,0,0,.6);
-    transition:.12s;
+  /* ---- PINOS — ícone de localização SVG ---- */
+  .pino-wrap{
+    position:relative;
+    display:flex; flex-direction:column; align-items:center;
+    cursor:pointer;
   }
-  .pino:hover{ transform:scale(1.4); }
+  .pino-svg{
+    width:26px; height:32px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,.55));
+    transition: transform .15s, filter .15s;
+  }
+  .pino-wrap:hover .pino-svg{
+    transform: scale(1.25) translateY(-3px);
+    filter: drop-shadow(0 4px 7px rgba(0,0,0,.7));
+  }
+  /* label nome ao hover */
+  .pino-label{
+    position:absolute; bottom:calc(100% + 4px);
+    background:var(--tinta); color:var(--pergaminho);
+    font-family:'Cinzel',serif; font-size:11px; letter-spacing:.3px;
+    padding:4px 9px; border-radius:3px; border:1px solid var(--ouro);
+    white-space:nowrap; pointer-events:none;
+    opacity:0; transform:translateY(4px);
+    transition: opacity .18s, transform .18s;
+    box-shadow:0 3px 10px rgba(0,0,0,.45);
+  }
+  .pino-wrap:hover .pino-label{
+    opacity:1; transform:translateY(0);
+  }
 
   /* ---- POPUP ---- */
   .leaflet-popup-content-wrapper{
-    background:linear-gradient(180deg,var(--pergaminho),var(--pergaminho-2));
-    color:var(--tinta); border:1px solid var(--borda); border-radius:5px;
-    box-shadow:0 8px 24px rgba(0,0,0,.35);
+    background:linear-gradient(160deg, var(--pergaminho) 0%, var(--pergaminho-2) 100%);
+    color:var(--tinta); border:1px solid var(--borda); border-radius:6px;
+    box-shadow:0 12px 36px rgba(0,0,0,.5), inset 0 0 0 3px rgba(176,133,66,.13);
+    min-width:240px; max-width:310px;
   }
-  .leaflet-popup-tip{ background:var(--pergaminho-2); border:1px solid var(--borda); }
-  .leaflet-popup-content{ margin:12px 16px; font-size:15px; line-height:1.4; }
+  .leaflet-popup-tip{ background:var(--pergaminho-2); }
+  .leaflet-popup-content{ margin:16px 18px 14px; font-size:15px; line-height:1.55; }
   .leaflet-popup-content h3{
-    font-family:'Cinzel',serif; font-size:16px;
-    letter-spacing:.3px; margin:0;
+    font-family:'Cinzel',serif; font-size:17px; font-weight:700;
+    color:var(--tinta); margin-bottom:8px;
+    border-bottom:1px solid rgba(90,67,38,.3); padding-bottom:6px;
+    letter-spacing:.3px;
   }
-  .leaflet-container a.leaflet-popup-close-button{ color:var(--borda); }
+  .leaflet-popup-content .pop-sub{
+    font-family:'Cinzel',serif; font-size:10px; letter-spacing:.7px;
+    text-transform:uppercase; color:var(--ouro);
+    display:block; margin-bottom:6px;
+  }
+  .leaflet-popup-content .pop-body{
+    font-family:'EB Garamond',serif; font-size:15px;
+    line-height:1.6; color:#3a2c1f;
+  }
+  .leaflet-container a.leaflet-popup-close-button{
+    color:var(--borda); font-size:18px; top:9px; right:11px;
+  }
+  .leaflet-container a.leaflet-popup-close-button:hover{ color:var(--vinho); }
 
-  /* controles de zoom */
-  .leaflet-control-zoom a{
-    background:rgba(255,255,255,.9); color:var(--tinta);
-    border:1px solid var(--borda)!important;
-    font-family:'Cinzel',serif;
+  /* entrada suave do popup */
+  .leaflet-popup{ animation: popIn .2s cubic-bezier(.22,.68,0,1.35); }
+  @keyframes popIn{
+    from{ opacity:0; transform:scale(.9) translateY(6px); }
+    to  { opacity:1; transform:scale(1)  translateY(0);   }
   }
-  .leaflet-control-zoom a:hover{ background:var(--ouro-claro); }
-  .leaflet-control-attribution{ background:rgba(255,255,255,.75)!important; font-size:10px; }
+
+  /* ---- ZOOM — canto inferior esquerdo ---- */
+  .leaflet-bottom.leaflet-left{ bottom:18px; left:18px; }
+  .leaflet-control-zoom{
+    border:1px solid var(--borda) !important;
+    border-radius:5px !important; overflow:hidden;
+    box-shadow:0 4px 14px rgba(0,0,0,.3) !important;
+  }
+  .leaflet-control-zoom a{
+    background:rgba(239,226,200,.95) !important; color:var(--tinta) !important;
+    border:none !important; border-bottom:1px solid var(--borda) !important;
+    font-family:'Cinzel',serif; font-size:16px;
+    width:30px !important; height:30px !important;
+    display:flex !important; align-items:center; justify-content:center;
+    line-height:1 !important;
+  }
+  .leaflet-control-zoom-out{ border-bottom:none !important; }
+  .leaflet-control-zoom a:hover{ background:var(--ouro-claro) !important; }
+  .leaflet-control-attribution{ background:rgba(255,255,255,.7)!important; font-size:10px; }
 
   /* ---- MOBILE ---- */
-  @media (max-width: 640px){
+  @media (max-width:640px){
     #hamburguer{ display:flex; }
-    .hud{
-      top:64px; left:14px;
-      width:calc(100vw - 28px);
-      display:none;
-    }
+    .hud{ top:64px; left:14px; width:calc(100vw - 28px); display:none; }
     .hud.visivel{ display:block; }
   }
 </style>
@@ -169,111 +216,195 @@
 
 <div id="map"></div>
 
-<!-- hamburguer (mobile) -->
 <div id="hamburguer" onclick="toggleHud()">
   <span></span><span></span><span></span>
 </div>
 
 <div class="hud" id="hud">
-  <h1 id="titulo">Meu Mundo</h1>
+  <h1 id="titulo">Austanos</h1>
   <div class="sub" id="subtitulo">um atlas das terras conhecidas</div>
   <div class="lugares" id="lugares"></div>
-  <button class="coord-btn" id="coordBtn">📍 Encontrar coordenadas</button>
+  <button class="coord-btn" id="coordBtn">
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+    </svg>
+    Encontrar coordenadas
+  </button>
 </div>
 
 <div id="leitura"></div>
 
 <script>
 /* ============================================================
-   ⬇️  PERSONALIZE AQUI  ⬇️
+   PERSONALIZE AQUI
    ============================================================ */
 
-const TITULO    = "Meu Mundo";
+const TITULO    = "Austanos";
 const SUBTITULO = "um atlas das terras conhecidas";
+const IMAGEM    = "map.png";
+const LARGURA   = 1142;
+const ALTURA    = 2048;
 
-// Caminho/URL da sua imagem (já no GitHub, só atualizar)
-const IMAGEM = "map.png";
-
-// Tamanho real da imagem em pixels
-const LARGURA = 1142;
-const ALTURA  = 2048;
-
-// Pinos — coordenadas estimadas do mapa (use "Encontrar coordenadas" pra ajustar)
 const PINOS = [
-  { x:510, y:619, titulo:"Rookery Castle"    },
-  { x:900, y:821, titulo:"Rosegarden"        },
-  { x: 428, y: 1052, titulo:"Highclaw"       },
-  { x:649, y:1134, titulo:"Woodden"          },
-  { x:939, y:1118, titulo:"Squidstone"       },
-  { x:477, y:1285, titulo:"Lion's Domain"    },
-  { x:610, y:1302, titulo:"Reedfort"         },
-  { x:696, y:1381, titulo:"Cliffridge"       },
-  { x:313, y:1479, titulo:"Thundergorge"     },
-  { x:823, y:1609, titulo:"Gryffrock"        },
-  {  x:573, y:1912, titulo:"Sunstone"        },
+  {
+    x:510, y:619, cor:"#7a2e26",
+    titulo:"Rookery Castle",
+    subtitulo:"Casa Torlland",
+    texto:"A mais antiga das casas, erguida sobre um povo que chegou pelo mar do norte antes de qualquer outro povo chegar ao continente. Nunca foram convertidos à fé dos Rhunos, nunca foram vencidos por força externa. Guardam uma muralha no extremo norte que o resto do continente há muito parou de financiar. A sua fé acredita que o inverno vence no fim e que nem os deuses escapam disso."
+  },
+  {
+    x:900, y:821, cor:"#4a7a2e",
+    titulo:"Rosegarden",
+    subtitulo:"Casa Farrell",
+    texto:"A casa do nordeste fértil, a única das grandes casas que chegou ao poder pela administração e não pelo combate. O fundador era senescal da casa anterior e assumiu o governo quando a linhagem que servia foi destruída numa batalha. Governam pela hospitalidade e pelo casamento mais do que pelo exército. Movem-se devagar em direção ao que querem e raramente declaram abertamente o que é."
+  },
+  {
+    x:428, y:1052, cor:"#7a2e26",
+    titulo:"Highclaw",
+    subtitulo:"Casa Tukk",
+    texto:"A segunda casa mais antiga do continente, senhora das três passagens que cortam as montanhas do oeste. Controlam os únicos acessos viáveis ao Vale Poente, e nenhum exército entrou no Vale sem permissão dos Tukk. Raramente saem do Vale para envolver-se nos conflitos do continente. Consideram essa escolha prudência. As outras casas consideram arrogância."
+  },
+  {
+    x:649, y:1134, cor:"#2f6b6b",
+    titulo:"Woodden",
+    subtitulo:"Ponto de interesse",
+    texto:""
+  },
+  {
+    x:939, y:1118, cor:"#2f4a7a",
+    titulo:"Squidstone",
+    subtitulo:"Casa Ryke",
+    texto:"A casa da ponta nordeste, dona da maior frota do continente. Dizem ter chegado ao continente antes de todos os outros povos, vindo do mar oriental e não do oeste como os demais. Os estudiosos não encontraram evidência que confirme essa origem. Os Ryke nunca permitiram que ninguém examinasse os seus registros antigos. Guardam uma fé própria, distinta da que os Rhunos trouxeram ao continente, e casam quase exclusivamente dentro da própria gente."
+  },
+  {
+    x:477, y:1285, cor:"#2f6b6b",
+    titulo:"Lion's Domain",
+    subtitulo:"Ponto de interesse",
+    texto:""
+  },
+  {
+    x:610, y:1302, cor:"#7a2e26",
+    titulo:"Reedfort",
+    subtitulo:"Casa Barriston",
+    texto:"A casa do centro, com sede onde os três rios se encontram. Nasceu de uma rebelião contra um senhor considerado injusto pelos seus próprios vassalos. O fundador poupou os filhos do homem que derrubou quando o costume da época era matá-los. São lentos a fazer promessas e conhecidos por cumpri-las quando as fazem. Essa reputação é o principal ativo político da casa."
+  },
+  {
+    x:696, y:1381, cor:"#2f6b6b",
+    titulo:"Cliffridge",
+    subtitulo:"Ponto de interesse",
+    texto:""
+  },
+  {
+    x:313, y:1479, cor:"#7a2e26",
+    titulo:"Thundergorge",
+    subtitulo:"Casa Greyley",
+    texto:"A casa da costa sudoeste, com sede sobre o desfiladeiro das tempestades. Fundada pela espada há cerca de quatro séculos, quando o fundador matou o senhor anterior em batalha e desposou a filha dele para dar aparência de direito ao que havia tomado pela força. Resolvem disputas pela força com mais frequência do que pela negociação, e não consideram isso uma fraqueza."
+  },
+  {
+    x:823, y:1609, cor:"#7a2e26",
+    titulo:"Gryffrock",
+    subtitulo:"Casa Gryff",
+    texto:"A casa mais rica do continente, com sede no leste onde estão as principais minas de metal. Preferem negociar a combater, e usaram casamentos e empréstimos para estender influência por quase todas as outras casas ao longo das gerações. As terras que governam têm história mais longa do que a própria casa — os primeiros poços foram abertos por trabalhadores escravizados séculos antes de qualquer Gryff existir."
+  },
+  {
+    x:573, y:1912, cor:"#7a2e26",
+    titulo:"Sunstone",
+    subtitulo:"Casa Tyran",
+    texto:"A casa do extremo sul, região com o clima mais quente do continente. A marca da civilização belta ainda é visível nas leis, nos costumes e na arquitetura do domínio. Governam por leis que reconhecem mulheres como herdeiras, prática que vem daquela herança e que o norte nunca adotou. Quando o continente foi reunido sob autoridade comum, o sul foi o último a aceitar, e aceitou sob condições que preservaram a maior parte da sua autonomia."
+  },
 ];
 
 /* ============================================================
-   ⬆️  FIM DA PERSONALIZAÇÃO
+   MOTOR
    ============================================================ */
 
 document.getElementById("titulo").textContent    = TITULO;
 document.getElementById("subtitulo").textContent = SUBTITULO;
 
+function svgPin(cor){
+  return `<svg class="pino-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"
+      fill="${cor}" stroke="rgba(0,0,0,0.4)" stroke-width="0.8"/>
+    <circle cx="12" cy="9" r="2.6" fill="rgba(255,255,255,0.85)"/>
+  </svg>`;
+}
+
 const map = L.map("map", {
   crs: L.CRS.Simple,
   minZoom: -5, maxZoom: 3,
-  zoomControl: true,
+  zoomControl: false,
   attributionControl: true,
   wheelPxPerZoomLevel: 80,
 });
 
+// Zoom no canto inferior esquerdo
+L.control.zoom({ position:"bottomleft" }).addTo(map);
+
 const bounds = [[0,0],[ALTURA,LARGURA]];
 L.imageOverlay(IMAGEM, bounds).addTo(map);
 
-// Preenche a tela pela altura (mapa vertical)
+// Trava: não deixa subir além do topo da imagem
+map.setMaxBounds([
+  [ALTURA * 1.0, -LARGURA * 0.15],   // topo exato
+  [-ALTURA * 0.15,  LARGURA * 1.15]
+]);
+
 function zoomVertical(){
   const z = Math.log2(window.innerHeight / ALTURA);
   map.setView([ALTURA/2, LARGURA/2], z, { animate:false });
 }
 zoomVertical();
 window.addEventListener("resize", () => { if(!map._zooming) zoomVertical(); });
-map.setMaxBounds([[-ALTURA*.15,-LARGURA*.15],[ALTURA*1.15,LARGURA*1.15]]);
 
-// pixel (x esq, y topo) → latLng Leaflet
 function xy(x,y){ return [ALTURA-y, x]; }
 
 // Pinos
 const lugaresBox = document.getElementById("lugares");
 PINOS.forEach(p => {
+  const cor = p.cor || "#7a2e26";
+
   const icon = L.divIcon({
     className:"",
-    html:`<div class="pino"></div>`,
-    iconSize:[14,14], iconAnchor:[7,7], popupAnchor:[0,-10],
+    html:`<div class="pino-wrap">
+            ${svgPin(cor)}
+            <div class="pino-label">${p.titulo}</div>
+          </div>`,
+    iconSize:[26,32], iconAnchor:[13,32], popupAnchor:[0,-34],
   });
+
+  const popHTML = `
+    ${p.subtitulo ? `<span class="pop-sub">${p.subtitulo}</span>` : ""}
+    <h3>${p.titulo}</h3>
+    ${p.texto ? `<div class="pop-body">${p.texto}</div>` : ""}`;
+
   const m = L.marker(xy(p.x,p.y),{icon}).addTo(map)
-    .bindPopup(`<h3>${p.titulo}</h3>`);
+    .bindPopup(popHTML, { maxWidth:310, closeButton:true });
 
   const b = document.createElement("button");
   b.textContent = p.titulo;
   b.onclick = () => {
-    map.flyTo(xy(p.x,p.y), 1, {duration:.7});
-    m.openPopup();
-    // fecha o painel no mobile após clicar
+    map.flyTo(xy(p.x,p.y), 1, { duration:.8, easeLinearity:.3 });
+    setTimeout(() => m.openPopup(), 550);
     if(window.innerWidth<=640) fecharHud();
   };
   lugaresBox.appendChild(b);
 });
 
 // Localizador de coordenadas
-const btn     = document.getElementById("coordBtn");
-const leitura = document.getElementById("leitura");
-let modoCoord = false;
+const coordBtn = document.getElementById("coordBtn");
+const leitura  = document.getElementById("leitura");
+let modoCoord  = false;
 
-btn.onclick = () => {
+const iconePin = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/>
+</svg>`;
+
+coordBtn.onclick = () => {
   modoCoord = !modoCoord;
-  btn.classList.toggle("ativo", modoCoord);
-  btn.textContent = modoCoord ? "✕ Sair do modo coordenadas" : "📍 Encontrar coordenadas";
+  coordBtn.classList.toggle("ativo", modoCoord);
+  coordBtn.innerHTML = modoCoord
+    ? `${iconePin} Sair do modo coordenadas`
+    : `${iconePin} Encontrar coordenadas`;
   leitura.style.display = modoCoord ? "block" : "none";
   if(modoCoord) leitura.innerHTML = "Clique em qualquer ponto do mapa";
   document.getElementById("map").style.cursor = modoCoord ? "crosshair" : "";
@@ -283,9 +414,9 @@ map.on("click", e => {
   if(!modoCoord) return;
   const x = Math.round(e.latlng.lng);
   const y = Math.round(ALTURA - e.latlng.lat);
-  leitura.innerHTML = `x: <b>${x}</b>&nbsp;&nbsp; y: <b>${y}</b>
+  leitura.innerHTML = `x: <b>${x}</b>&emsp;y: <b>${y}</b>
     <small>{ x:${x}, y:${y}, titulo:"Nome do Local" }</small>`;
-  navigator.clipboard?.writeText(`{ x:${x}, y:${y}, titulo:"" },`).catch(()=>{});
+  navigator.clipboard?.writeText(`{ x:${x}, y:${y}, cor:"#7a2e26", titulo:"", subtitulo:"", texto:"" },`).catch(()=>{});
 });
 
 // Hamburguer mobile
