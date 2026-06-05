@@ -251,16 +251,29 @@ document.getElementById("subtitulo").textContent = SUBTITULO;
 
 const map = L.map("map", {
   crs: L.CRS.Simple,
-  minZoom: -3,
+  minZoom: -5,
   maxZoom: 3,
   zoomControl: true,
   attributionControl: true,
+  wheelPxPerZoomLevel: 80,
 });
 
 const bounds = [[0, 0], [ALTURA, LARGURA]];
 L.imageOverlay(IMG, bounds).addTo(map);
-map.fitBounds(bounds);
-map.setMaxBounds([[-ALTURA*0.3, -LARGURA*0.3], [ALTURA*1.3, LARGURA*1.3]]);
+
+// Zoom "cover": preenche a tela toda igual wallpaper.
+// Para mapa vertical, preenche pelo HEIGHT e permite pan horizontal.
+function zoomCover(){
+  const scaleW = window.innerWidth  / LARGURA;
+  const scaleH = window.innerHeight / ALTURA;
+  const scale  = Math.max(scaleW, scaleH);
+  const z      = Math.log2(scale);
+  map.setView([ALTURA / 2, LARGURA / 2], z, { animate: false });
+}
+zoomCover();
+window.addEventListener("resize", () => { if(!map._zooming) zoomCover(); });
+
+map.setMaxBounds([[-ALTURA*0.15, -LARGURA*0.15], [ALTURA*1.15, LARGURA*1.15]]);
 
 // converte coords de pixel (x da esquerda, y de cima) -> coord do Leaflet
 function xy(x, y){ return [ALTURA - y, x]; }
