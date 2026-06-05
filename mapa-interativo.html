@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa Interativo</title>
+
+<!-- Leaflet (biblioteca do mapa) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<!-- Fontes -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --tinta:        #2b2018;
+    --pergaminho:   #efe2c8;
+    --pergaminho-2: #e3d2af;
+    --ouro:         #b08542;
+    --ouro-claro:   #d9b06b;
+    --vinho:        #7a2e26;
+    --borda:        #5a4326;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html,body{ height:100%; }
+  body{
+    font-family:'EB Garamond', Georgia, serif;
+    background:#1a1410;
+    color:var(--tinta);
+    overflow:hidden;
+  }
+
+  /* ---- O MAPA ---- */
+  #map{
+    position:absolute; inset:0;
+    background:#1a1410;       /* cor "fora" do mapa */
+    cursor:grab;
+  }
+  #map:active{ cursor:grabbing; }
+
+  /* tom de pergaminho atrás da imagem + vinheta de borda */
+  .leaflet-container{ background:#1a1410; outline:none; }
+  #vinheta{
+    position:absolute; inset:0; pointer-events:none; z-index:500;
+    box-shadow: inset 0 0 220px 40px rgba(20,12,6,.65);
+  }
+
+  /* ---- PAINEL (canto superior esquerdo) ---- */
+  .hud{
+    position:absolute; top:18px; left:18px; z-index:600;
+    width:280px; max-width:calc(100vw - 36px);
+    background:
+      linear-gradient(180deg, var(--pergaminho), var(--pergaminho-2));
+    border:1px solid var(--borda);
+    border-radius:6px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45), inset 0 0 0 4px rgba(176,133,66,.18);
+    padding:16px 16px 14px;
+  }
+  .hud h1{
+    font-family:'Cinzel', serif; font-weight:700;
+    font-size:21px; letter-spacing:.5px; color:var(--tinta);
+    line-height:1.1; margin-bottom:2px;
+  }
+  .hud .sub{
+    font-style:italic; font-size:13px; color:#6b5942;
+    border-bottom:1px solid rgba(90,67,38,.3);
+    padding-bottom:10px; margin-bottom:10px;
+  }
+
+  .legenda{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+  .legenda .item{ display:flex; align-items:center; gap:9px; font-size:14px; }
+  .legenda .ponto{
+    width:13px; height:13px; border-radius:50%;
+    border:1.5px solid rgba(0,0,0,.35);
+    box-shadow:0 0 0 2px rgba(255,255,255,.4);
+    flex:none;
+  }
+
+  /* lista de lugares (clica pra voar até) */
+  .lugares{ max-height:30vh; overflow:auto; margin:-2px -4px 12px; padding:0 4px; }
+  .lugares button{
+    display:block; width:100%; text-align:left;
+    background:none; border:none; cursor:pointer;
+    font-family:'EB Garamond', serif; font-size:14.5px; color:var(--tinta);
+    padding:5px 8px; border-radius:4px;
+  }
+  .lugares button:hover{ background:rgba(176,133,66,.22); }
+  .lugares button::before{ content:"➜ "; color:var(--ouro); }
+
+  /* botão localizador de coordenadas */
+  .coord-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    width:100%; cursor:pointer;
+    font-family:'Cinzel', serif; font-size:12px; letter-spacing:.5px;
+    text-transform:uppercase;
+    background:var(--tinta); color:var(--pergaminho);
+    border:1px solid var(--borda); border-radius:4px;
+    padding:9px; transition:.15s;
+  }
+  .coord-btn:hover{ background:#3a2c1f; }
+  .coord-btn.ativo{ background:var(--vinho); }
+
+  /* leitura das coordenadas ao clicar no mapa */
+  #leitura{
+    position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
+    z-index:600; display:none;
+    background:var(--tinta); color:var(--pergaminho);
+    font-family:'Cinzel', serif; font-size:14px; letter-spacing:.5px;
+    padding:10px 18px; border-radius:5px; border:1px solid var(--ouro);
+    box-shadow:0 8px 24px rgba(0,0,0,.5);
+  }
+  #leitura b{ color:var(--ouro-claro); }
+  #leitura small{ display:block; font-family:'EB Garamond',serif; letter-spacing:0; opacity:.7; font-size:12px; margin-top:3px; }
+
+  /* ---- PINOS no mapa ---- */
+  .pino{
+    width:18px; height:18px; border-radius:50% 50% 50% 0;
+    transform:rotate(-45deg);
+    border:2px solid rgba(0,0,0,.45);
+    box-shadow:0 3px 6px rgba(0,0,0,.5);
+    transition:.12s;
+  }
+  .pino:hover{ transform:rotate(-45deg) scale(1.25); z-index:1000; }
+
+  /* ---- POPUP estilizado ---- */
+  .leaflet-popup-content-wrapper{
+    background:linear-gradient(180deg,var(--pergaminho),var(--pergaminho-2));
+    color:var(--tinta); border:1px solid var(--borda); border-radius:5px;
+    box-shadow:0 8px 24px rgba(0,0,0,.45);
+  }
+  .leaflet-popup-tip{ background:var(--pergaminho-2); border:1px solid var(--borda); }
+  .leaflet-popup-content{ margin:14px 16px; font-size:15px; line-height:1.45; }
+  .leaflet-popup-content h3{
+    font-family:'Cinzel',serif; font-size:17px; margin-bottom:5px;
+    border-bottom:1px solid rgba(90,67,38,.35); padding-bottom:5px;
+  }
+  .leaflet-popup-content .tag{
+    display:inline-block; font-family:'Cinzel',serif; font-size:10px;
+    letter-spacing:.5px; text-transform:uppercase; color:#fff;
+    padding:2px 8px; border-radius:3px; margin-bottom:7px;
+  }
+  .leaflet-container a.leaflet-popup-close-button{ color:var(--borda); }
+
+  /* controles de zoom no estilo do tema */
+  .leaflet-control-zoom a{
+    background:var(--pergaminho); color:var(--tinta);
+    border:1px solid var(--borda)!important;
+    font-family:'Cinzel',serif;
+  }
+  .leaflet-control-zoom a:hover{ background:var(--ouro-claro); }
+  .leaflet-control-attribution{ background:rgba(239,226,200,.8)!important; font-size:10px; }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+<div id="vinheta"></div>
+
+<div class="hud">
+  <h1 id="titulo">Meu Mundo</h1>
+  <div class="sub" id="subtitulo">um atlas das terras conhecidas</div>
+
+  <div class="legenda" id="legenda"></div>
+  <div class="lugares" id="lugares"></div>
+
+  <button class="coord-btn" id="coordBtn">📍 Encontrar coordenadas</button>
+</div>
+
+<div id="leitura"></div>
+
+<script>
+/* ============================================================
+   ⬇️  PERSONALIZE TUDO AQUI  ⬇️
+   ============================================================ */
+
+// 1) NOME DO SEU MUNDO
+const TITULO    = "Meu Mundo";
+const SUBTITULO = "um atlas das terras conhecidas";
+
+// 2) SUA IMAGEM DE MAPA
+//    Troque "EXEMPLO" pelo caminho/URL da sua imagem, ex:
+//    const IMAGEM = "meu-mapa.png";
+//    (deixe o arquivo na mesma pasta deste HTML, ou use um link https)
+const IMAGEM = "map.png";
+
+// 3) TAMANHO DA IMAGEM em pixels (largura x altura reais do arquivo)
+const LARGURA = 1142;
+const ALTURA  = 2048;
+
+// 4) TIPOS DE PINO (cor + rótulo). Crie quantos quiser.
+const TIPOS = {
+  capital:  { cor:"#7a2e26", nome:"Capital"      },
+  cidade:   { cor:"#b08542", nome:"Cidade"       },
+  masmorra: { cor:"#5b3a78", nome:"Masmorra"     },
+  ponto:    { cor:"#2f6b6b", nome:"Ponto de interesse" },
+};
+
+// 5) SEUS PINOS
+//    x, y = coordenadas em pixels (use o botão "Encontrar coordenadas"
+//    pra descobrir clicando no próprio mapa). x conta da esquerda,
+//    y conta de cima — igual num editor de imagem.
+const PINOS = [
+  { x:430, y:300, tipo:"capital",  titulo:"Pedravéu",       texto:"Sede do trono e maior cidade do reino. Suas muralhas nunca foram tomadas." },
+  { x:660, y:200, tipo:"cidade",   titulo:"Porto Salgueiro", texto:"Cidade portuária movimentada, famosa pelo comércio de especiarias." },
+  { x:250, y:480, tipo:"masmorra", titulo:"Cripta de Velhos Ossos", texto:"Ninguém que entrou voltou pra contar. Recomenda-se cautela." },
+  { x:540, y:520, tipo:"ponto",    titulo:"Lago Espelho",    texto:"Dizem que reflete não o céu, mas o futuro de quem olha." },
+];
+
+/* ============================================================
+   ⬆️  FIM DA PERSONALIZAÇÃO — o resto é o motor do mapa  ⬆️
+   ============================================================ */
+
+
+// imagem do mapa
+const IMG = IMAGEM;
+
+// ---- monta o mapa ----
+document.getElementById("titulo").textContent = TITULO;
+document.getElementById("subtitulo").textContent = SUBTITULO;
+
+const map = L.map("map", {
+  crs: L.CRS.Simple,
+  minZoom: -5,
+  maxZoom: 3,
+  zoomControl: true,
+  attributionControl: true,
+  wheelPxPerZoomLevel: 80,
+});
+
+const bounds = [[0, 0], [ALTURA, LARGURA]];
+L.imageOverlay(IMG, bounds).addTo(map);
+
+// Zoom vertical: escala pela ALTURA para mapa retrato (1142x2048).
+// A imagem preenche toda a altura da tela; se sobrar largura, centraliza.
+// O usuário pode arrastar e dar zoom livremente depois.
+function zoomVertical(){
+  const scaleH = window.innerHeight / ALTURA;
+  const scaleW = window.innerWidth  / LARGURA;
+  // "contain-height": sempre mostra o mapa inteiro na vertical
+  // se a largura for o limitante (tela muito estreita), usa ela
+  const scale  = Math.min(scaleH, Math.max(scaleH, scaleW));
+  const z      = Math.log2(scaleH);
+  map.setView([ALTURA / 2, LARGURA / 2], z, { animate: false });
+}
+zoomVertical();
+window.addEventListener("resize", () => { if(!map._zooming) zoomVertical(); });
+
+map.setMaxBounds([[-ALTURA*0.15, -LARGURA*0.15], [ALTURA*1.15, LARGURA*1.15]]);
+
+// converte coords de pixel (x da esquerda, y de cima) -> coord do Leaflet
+function xy(x, y){ return [ALTURA - y, x]; }
+
+// ---- desenha os pinos ----
+const lugaresBox = document.getElementById("lugares");
+PINOS.forEach(p => {
+  const t = TIPOS[p.tipo] || { cor:"#444", nome:p.tipo };
+
+  const icon = L.divIcon({
+    className: "",
+    html: `<div class="pino" style="background:${t.cor}"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 18],
+    popupAnchor: [0, -18],
+  });
+
+  const popup = `
+    <span class="tag" style="background:${t.cor}">${t.nome}</span>
+    <h3>${p.titulo}</h3>
+    <div>${p.texto || ""}</div>`;
+
+  const m = L.marker(xy(p.x, p.y), { icon }).addTo(map).bindPopup(popup);
+
+  // adiciona à lista lateral (clicar = voar até o pino)
+  const b = document.createElement("button");
+  b.textContent = p.titulo;
+  b.onclick = () => { map.flyTo(xy(p.x, p.y), 1, { duration:.8 }); m.openPopup(); };
+  lugaresBox.appendChild(b);
+});
+
+// ---- monta a legenda automaticamente ----
+const legBox = document.getElementById("legenda");
+Object.values(TIPOS).forEach(t => {
+  const item = document.createElement("div");
+  item.className = "item";
+  item.innerHTML = `<span class="ponto" style="background:${t.cor}"></span>${t.nome}`;
+  legBox.appendChild(item);
+});
+
+// ---- localizador de coordenadas ----
+const btn = document.getElementById("coordBtn");
+const leitura = document.getElementById("leitura");
+let modoCoord = false;
+
+btn.onclick = () => {
+  modoCoord = !modoCoord;
+  btn.classList.toggle("ativo", modoCoord);
+  btn.textContent = modoCoord ? "✕ Sair do modo coordenadas" : "📍 Encontrar coordenadas";
+  leitura.style.display = modoCoord ? "block" : "none";
+  if(modoCoord) leitura.innerHTML = "Clique em qualquer ponto do mapa";
+  document.getElementById("map").style.cursor = modoCoord ? "crosshair" : "";
+};
+
+map.on("click", e => {
+  if(!modoCoord) return;
+  const x = Math.round(e.latlng.lng);
+  const y = Math.round(ALTURA - e.latlng.lat);
+  leitura.innerHTML = `x: <b>${x}</b>&nbsp;&nbsp; y: <b>${y}</b>
+    <small>copie em PINOS: { x:${x}, y:${y}, tipo:"cidade", titulo:"...", texto:"..." }</small>`;
+  navigator.clipboard?.writeText(`{ x:${x}, y:${y}, tipo:"cidade", titulo:"", texto:"" },`).catch(()=>{});
+});
+</script>
+</body>
+</html>
