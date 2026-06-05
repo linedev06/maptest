@@ -186,11 +186,11 @@ const SUBTITULO = "um atlas das terras conhecidas";
 //    Troque "EXEMPLO" pelo caminho/URL da sua imagem, ex:
 //    const IMAGEM = "meu-mapa.png";
 //    (deixe o arquivo na mesma pasta deste HTML, ou use um link https)
-const IMAGEM = "map.png";   // <-- substitua por "seu-mapa.png"
+const IMAGEM = "map.png";
 
 // 3) TAMANHO DA IMAGEM em pixels (largura x altura reais do arquivo)
-const LARGURA = 1000;
-const ALTURA  = 700;
+const LARGURA = 1142;
+const ALTURA  = 2048;
 
 // 4) TIPOS DE PINO (cor + rótulo). Crie quantos quiser.
 const TIPOS = {
@@ -216,34 +216,8 @@ const PINOS = [
    ============================================================ */
 
 
-// ---- imagem de exemplo (apague depois que colocar a sua) ----
-function fazPlaceholder(){
-  const svg = `
-  <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700">
-    <rect width="1000" height="700" fill="#cfe0d6"/>
-    <g fill="#dccaa3" stroke="#9c8453" stroke-width="3">
-      <path d="M180,210 C120,300 160,430 280,500 C400,560 560,540 640,460
-               C740,360 700,250 580,200 C480,158 280,140 180,210 Z"/>
-    </g>
-    <g fill="none" stroke="#9c8453" stroke-width="2" opacity=".55">
-      <path d="M200,250 C300,230 420,260 520,250"/>
-      <path d="M240,400 C360,420 480,400 600,420"/>
-    </g>
-    <g fill="#6b5942" font-family="Georgia, serif" font-style="italic" text-anchor="middle">
-      <text x="500" y="70" font-size="34">⚓ Mar das Brumas ⚓</text>
-      <text x="430" y="650" font-size="20" opacity=".8">Substitua por sua própria imagem de mapa</text>
-    </g>
-    <g transform="translate(880,580)" stroke="#9c8453" fill="#9c8453">
-      <circle r="34" fill="none" stroke-width="2"/>
-      <path d="M0,-40 L8,0 L0,40 L-8,0 Z" fill="#7a2e26" stroke="none"/>
-      <text x="0" y="-44" font-size="14" text-anchor="middle" stroke="none">N</text>
-    </g>
-  </svg>`;
-  return "data:image/svg+xml," + encodeURIComponent(svg);
-}
-// a variável PLACEHOLDER usada lá em cima:
-// resolve a imagem: se ainda for "EXEMPLO", gera o SVG de demonstração
-const IMG = (IMAGEM === "EXEMPLO") ? fazPlaceholder() : IMAGEM;
+// imagem do mapa
+const IMG = IMAGEM;
 
 // ---- monta o mapa ----
 document.getElementById("titulo").textContent = TITULO;
@@ -261,17 +235,20 @@ const map = L.map("map", {
 const bounds = [[0, 0], [ALTURA, LARGURA]];
 L.imageOverlay(IMG, bounds).addTo(map);
 
-// Zoom "cover": preenche a tela toda igual wallpaper.
-// Para mapa vertical, preenche pelo HEIGHT e permite pan horizontal.
-function zoomCover(){
-  const scaleW = window.innerWidth  / LARGURA;
+// Zoom vertical: escala pela ALTURA para mapa retrato (1142x2048).
+// A imagem preenche toda a altura da tela; se sobrar largura, centraliza.
+// O usuário pode arrastar e dar zoom livremente depois.
+function zoomVertical(){
   const scaleH = window.innerHeight / ALTURA;
-  const scale  = Math.max(scaleW, scaleH);
-  const z      = Math.log2(scale);
+  const scaleW = window.innerWidth  / LARGURA;
+  // "contain-height": sempre mostra o mapa inteiro na vertical
+  // se a largura for o limitante (tela muito estreita), usa ela
+  const scale  = Math.min(scaleH, Math.max(scaleH, scaleW));
+  const z      = Math.log2(scaleH);
   map.setView([ALTURA / 2, LARGURA / 2], z, { animate: false });
 }
-zoomCover();
-window.addEventListener("resize", () => { if(!map._zooming) zoomCover(); });
+zoomVertical();
+window.addEventListener("resize", () => { if(!map._zooming) zoomVertical(); });
 
 map.setMaxBounds([[-ALTURA*0.15, -LARGURA*0.15], [ALTURA*1.15, LARGURA*1.15]]);
 
