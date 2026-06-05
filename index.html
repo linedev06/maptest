@@ -154,10 +154,28 @@
     background:linear-gradient(160deg, var(--pergaminho) 0%, var(--pergaminho-2) 100%);
     color:var(--tinta); border:1px solid var(--borda); border-radius:6px;
     box-shadow:0 12px 36px rgba(0,0,0,.5), inset 0 0 0 3px rgba(176,133,66,.13);
-    min-width:240px; max-width:310px;
+    min-width:240px; max-width:320px;
   }
   .leaflet-popup-tip{ background:var(--pergaminho-2); }
-  .leaflet-popup-content{ margin:16px 18px 14px; font-size:15px; line-height:1.55; }
+  .leaflet-popup-content{ margin:0; padding:0; font-size:15px; line-height:1.55; }
+
+  /* imagem do popup */
+  .pop-img-wrap{
+    width:100%; overflow:hidden;
+    border-radius:5px 5px 0 0;
+    max-height:180px;
+  }
+  .pop-img-wrap img{
+    width:100%; display:block;
+    object-fit:cover; object-position:center top;
+    opacity:0;
+    transition: opacity .45s ease;
+  }
+  .pop-img-wrap img.carregada{ opacity:1; }
+
+  /* conteúdo abaixo da imagem */
+  .pop-inner{ padding:14px 18px 16px; }
+
   .leaflet-popup-content h3{
     font-family:'Cinzel',serif; font-size:17px; font-weight:700;
     color:var(--tinta); margin-bottom:8px;
@@ -250,66 +268,77 @@ const PINOS = [
     x:510, y:619, cor:"#7a2e26",
     titulo:"Rookery Castle",
     subtitulo:"Casa Torlland",
+    imagem:"IMAGEM AQUI",   // ex: "rookery.png" — deixe "" para sem imagem
     texto:"A mais antiga das casas, erguida sobre um povo que chegou pelo mar do norte antes de qualquer outro povo chegar ao continente. Nunca foram convertidos à fé dos Rhunos, nunca foram vencidos por força externa. Guardam uma muralha no extremo norte que o resto do continente há muito parou de financiar. A sua fé acredita que o inverno vence no fim e que nem os deuses escapam disso."
   },
   {
     x:900, y:821, cor:"#4a7a2e",
     titulo:"Rosegarden",
     subtitulo:"Casa Farrell",
+    imagem:"IMAGEM AQUI",
     texto:"A casa do nordeste fértil, a única das grandes casas que chegou ao poder pela administração e não pelo combate. O fundador era senescal da casa anterior e assumiu o governo quando a linhagem que servia foi destruída numa batalha. Governam pela hospitalidade e pelo casamento mais do que pelo exército. Movem-se devagar em direção ao que querem e raramente declaram abertamente o que é."
   },
   {
     x:428, y:1052, cor:"#7a2e26",
     titulo:"Highclaw",
     subtitulo:"Casa Tukk",
+    imagem:"IMAGEM AQUI",
     texto:"A segunda casa mais antiga do continente, senhora das três passagens que cortam as montanhas do oeste. Controlam os únicos acessos viáveis ao Vale Poente, e nenhum exército entrou no Vale sem permissão dos Tukk. Raramente saem do Vale para envolver-se nos conflitos do continente. Consideram essa escolha prudência. As outras casas consideram arrogância."
   },
   {
     x:649, y:1134, cor:"#2f6b6b",
     titulo:"Woodden",
     subtitulo:"Ponto de interesse",
+    imagem:"",
     texto:""
   },
   {
     x:939, y:1118, cor:"#2f4a7a",
     titulo:"Squidstone",
     subtitulo:"Casa Ryke",
+    imagem:"IMAGEM AQUI",
     texto:"A casa da ponta nordeste, dona da maior frota do continente. Dizem ter chegado ao continente antes de todos os outros povos, vindo do mar oriental e não do oeste como os demais. Os estudiosos não encontraram evidência que confirme essa origem. Os Ryke nunca permitiram que ninguém examinasse os seus registros antigos. Guardam uma fé própria, distinta da que os Rhunos trouxeram ao continente, e casam quase exclusivamente dentro da própria gente."
   },
   {
     x:477, y:1285, cor:"#2f6b6b",
     titulo:"Lion's Domain",
     subtitulo:"Ponto de interesse",
+    imagem:"",
     texto:""
   },
   {
     x:610, y:1302, cor:"#7a2e26",
     titulo:"Reedfort",
     subtitulo:"Casa Barriston",
+    imagem:"IMAGEM AQUI",
     texto:"A casa do centro, com sede onde os três rios se encontram. Nasceu de uma rebelião contra um senhor considerado injusto pelos seus próprios vassalos. O fundador poupou os filhos do homem que derrubou quando o costume da época era matá-los. São lentos a fazer promessas e conhecidos por cumpri-las quando as fazem. Essa reputação é o principal ativo político da casa."
   },
   {
     x:696, y:1381, cor:"#2f6b6b",
     titulo:"Cliffridge",
     subtitulo:"Ponto de interesse",
+    imagem:"",
     texto:""
   },
   {
     x:313, y:1479, cor:"#7a2e26",
     titulo:"Thundergorge",
     subtitulo:"Casa Greyley",
+    imagem:"IMAGEM AQUI",
     texto:"A casa da costa sudoeste, com sede sobre o desfiladeiro das tempestades. Fundada pela espada há cerca de quatro séculos, quando o fundador matou o senhor anterior em batalha e desposou a filha dele para dar aparência de direito ao que havia tomado pela força. Resolvem disputas pela força com mais frequência do que pela negociação, e não consideram isso uma fraqueza."
   },
   {
     x:823, y:1609, cor:"#7a2e26",
     titulo:"Gryffrock",
     subtitulo:"Casa Gryff",
+    imagem:"IMAGEM AQUI",
     texto:"A casa mais rica do continente, com sede no leste onde estão as principais minas de metal. Preferem negociar a combater, e usaram casamentos e empréstimos para estender influência por quase todas as outras casas ao longo das gerações. As terras que governam têm história mais longa do que a própria casa — os primeiros poços foram abertos por trabalhadores escravizados séculos antes de qualquer Gryff existir."
   },
   {
     x:573, y:1912, cor:"#7a2e26",
     titulo:"Sunstone",
     subtitulo:"Casa Tyran",
+    imagem:"IMAGEM AQUI",
     texto:"A casa do extremo sul, região com o clima mais quente do continente. A marca da civilização belta ainda é visível nas leis, nos costumes e na arquitetura do domínio. Governam por leis que reconhecem mulheres como herdeiras, prática que vem daquela herança e que o norte nunca adotou. Quando o continente foi reunido sob autoridade comum, o sul foi o último a aceitar, e aceitou sob condições que preservaram a maior parte da sua autonomia."
   },
 ];
@@ -372,10 +401,21 @@ PINOS.forEach(p => {
     iconSize:[26,32], iconAnchor:[13,32], popupAnchor:[0,-34],
   });
 
+  const imgHTML = (p.imagem && p.imagem !== "IMAGEM AQUI")
+    ? `<div class="pop-img-wrap">
+         <img src="${p.imagem}" alt="${p.titulo}"
+              onload="this.classList.add('carregada')"
+              onerror="this.parentElement.style.display='none'">
+       </div>`
+    : "";
+
   const popHTML = `
-    ${p.subtitulo ? `<span class="pop-sub">${p.subtitulo}</span>` : ""}
-    <h3>${p.titulo}</h3>
-    ${p.texto ? `<div class="pop-body">${p.texto}</div>` : ""}`;
+    ${imgHTML}
+    <div class="pop-inner">
+      ${p.subtitulo ? `<span class="pop-sub">${p.subtitulo}</span>` : ""}
+      <h3>${p.titulo}</h3>
+      ${p.texto ? `<div class="pop-body">${p.texto}</div>` : ""}
+    </div>`;
 
   const m = L.marker(xy(p.x,p.y),{icon}).addTo(map)
     .bindPopup(popHTML, { maxWidth:310, closeButton:true });
