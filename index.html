@@ -155,21 +155,29 @@
     color:var(--tinta); border:1px solid var(--borda); border-radius:6px;
     box-shadow:0 12px 36px rgba(0,0,0,.5), inset 0 0 0 3px rgba(176,133,66,.13);
     min-width:240px; max-width:320px;
+    overflow:hidden;
   }
   .leaflet-popup-tip{ background:var(--pergaminho-2); }
-  .leaflet-popup-content{ margin:0; padding:0; font-size:15px; line-height:1.55; }
+
+  /* força margin zero que o Leaflet insiste em colocar */
+  .leaflet-popup-content{
+    margin:0 !important; padding:0 !important;
+    font-size:15px; line-height:1.55;
+    overflow:hidden; border-radius:5px;
+  }
 
   /* imagem do popup */
   .pop-img-wrap{
     width:100%; overflow:hidden;
     border-radius:5px 5px 0 0;
-    max-height:180px;
+    line-height:0;
   }
   .pop-img-wrap img{
     width:100%; display:block;
-    object-fit:cover; object-position:center top;
+    height:170px;
+    object-fit:cover; object-position:center center;
     opacity:0;
-    transition: opacity .45s ease;
+    transition: opacity .5s ease;
   }
   .pop-img-wrap img.carregada{ opacity:1; }
 
@@ -268,7 +276,7 @@ const PINOS = [
     x:510, y:619, cor:"#7a2e26",
     titulo:"Rookery Castle",
     subtitulo:"Casa Torlland",
-    imagem:"rookery.png",   // ex: "rookery.png" — deixe "" para sem imagem
+    imagem:"IMAGEM AQUI",   // ex: "rookery.png" — deixe "" para sem imagem
     texto:"A mais antiga das casas, erguida sobre um povo que chegou pelo mar do norte antes de qualquer outro povo chegar ao continente. Nunca foram convertidos à fé dos Rhunos, nunca foram vencidos por força externa. Guardam uma muralha no extremo norte que o resto do continente há muito parou de financiar. A sua fé acredita que o inverno vence no fim e que nem os deuses escapam disso."
   },
   {
